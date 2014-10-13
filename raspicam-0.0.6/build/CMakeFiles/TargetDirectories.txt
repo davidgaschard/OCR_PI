@@ -1,0 +1,5 @@
+/home/pi/OCR_PI/raspicam-0.0.6/build/src/CMakeFiles/raspicam.dir
+/home/pi/OCR_PI/raspicam-0.0.6/build/src/CMakeFiles/raspicam_cv.dir
+/home/pi/OCR_PI/raspicam-0.0.6/build/utils/CMakeFiles/raspicam_cv_test.dir
+/home/pi/OCR_PI/raspicam-0.0.6/build/utils/CMakeFiles/raspicam_test.dir
+/home/pi/OCR_PI/raspicam-0.0.6/build/CMakeFiles/uninstall.dir
