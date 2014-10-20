@@ -37,6 +37,7 @@ Mat CalculerContour(Mat& mat1)
 			}
 	   	}
 	}
+	std::cout << mat1 << '\n';
 	std::cout << "x_min :" << x_min << " x_max :" << x_max << " y_min : " << y_min << " y_max : " << y_max << '\n';
 	for (int i = y_min ; i < y_max ; i++) { // 960
 		for (int j = x_min ; j < 3*x_max ; j = j + 3) { // 1280
