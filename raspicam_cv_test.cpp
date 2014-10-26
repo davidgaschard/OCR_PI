@@ -21,7 +21,11 @@ int main ( int argc,char **argv ) {
 
 	Mat img = imread("pic_init.jpg",0);
 	Mat bin;
+	Mat bin2;
 	Mat res;
+	Mat rect;
+	Mat subImage;
+
 	int i = 0;
 	int j = 0;
 	int k = 0;
@@ -34,12 +38,14 @@ int main ( int argc,char **argv ) {
 	int debv1;
 	int endv1;
 	int b = 0;
-	RNG rng(12345);
-	if(!img.empty())
-		threshold(img,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
-	else
-		std::cout << "img is empty" << '\n';
-	imwrite("threshold_im.jpg",bin);
+
+	string name_img = "env_rect_symb_.jpg";
+	string tmp_str;
+	std::ostringstream convert;
+
+	Point pt1;
+	Point pt2;
+
 	std::vector<std::vector<Point> > contours;
 	std::vector<Vec4i> hierarchy;
 	std::vector<Point> cont_eq;
@@ -48,6 +54,14 @@ int main ( int argc,char **argv ) {
 	std::vector<Point> cont_eq_2;
 	std::vector<int> vect_x_1;
 	std::vector<int> vect_x_2;
+
+	RNG rng(1);
+	if(!img.empty())
+		threshold(img,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
+	else
+		std::cout << "img is empty" << '\n';
+	imwrite("threshold_im.jpg",bin);
+	bin2 = bin.clone();
 	if(!bin.empty())
 //		findContours(res,contours,hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE); // Recherche des contours des composantes connexes de l'image avec hiérarchie (donc plus long)
 		findContours(bin,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_L1); // Recherche des contours des composantes connexes de l'image
@@ -59,7 +73,9 @@ int main ( int argc,char **argv ) {
 		drawContours(res,contours,i,color,CV_FILLED, 8, hierarchy);
 
 	}*/
+
 	res = Mat::zeros(bin.size(), CV_8UC3);
+	rect = Mat::zeros(bin.size(), CV_8UC3);
 	std::vector<std::vector<Point> > contours_filt;
 	for(i=0; i<contours.size(); i++)
 	{
@@ -91,12 +107,12 @@ int main ( int argc,char **argv ) {
 			debv1 = vect_x_1[0];
 			endv1 = vect_x_1[vect_x_1.size()-1];
 
-				std::cout << "i : " << i << '\n';
+/*				std::cout << "i : " << i << '\n';
 				std::cout << "k : " << k << '\n';
 				std::cout << "medv2 : " << medv2 << '\n';
 				std::cout << "debv1 : " << debv1 << '\n';
 				std::cout << "endv1 : " << endv1 << '\n';
-			if(medv2 > debv1 && medv2 < endv1)
+*/			if(medv2 > debv1 && medv2 < endv1)
 			{
 				contours_filt[k].swap(contours_filt[size_cont-2]);
 				contours_filt[i].swap(contours_filt[size_cont-1]);
@@ -124,16 +140,26 @@ int main ( int argc,char **argv ) {
 	contours_filt.pop_back();
 	contours_filt.pop_back();
 	contours_filt.push_back(cont_eq);
-	std::cout << contours_filt.size() << '\n';
+//	std::cout << contours_filt.size() << '\n';
 	for(i=0; i<contours_filt.size(); i++) // Remplissage des contours
 	{
-		//Rect r = boundingRect(contours[i]); // Rectangle englobant une composante connexe (fonctionnement bizarre)
 		Scalar color = Scalar(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255));
+		drawContours(res,contours_filt,i,color,CV_FILLED, 8);
+		drawContours(rect,contours_filt,i,color,CV_FILLED, 8);
+		pt1 = boundingRect(contours_filt[i]).tl();
+		pt2 = boundingRect(contours_filt[i]).br();
+		rectangle(rect,pt1,pt2,color,2,8,0); // Rectangle englobant une composante connexe (fonctionne)
+		convert.str("");
+		convert << i;
+		tmp_str = convert.str();
+		name_img.replace(name_img.begin()+13,name_img.begin()+14,tmp_str);
+		std::cout << name_img << '\n';
+		subImage = Mat(bin2,Rect(pt1,pt2));
+		imwrite (name_img, subImage);
 		//std::cout << contours[i] << '\n';
 		//std::cout << i << '\n';
 		//col = rand()&255;
-		std::cout << "couleur : " << color[0]<< " " << color[1]<< " " << color[2]<< '\n';
-		drawContours(res,contours_filt,i,color,CV_FILLED, 8);
+//		std::cout << "couleur : " << color[0]<< " " << color[1]<< " " << color[2]<< '\n';
 	}
 
 //	cvtColor(img,res,CV_BGR2GRAY);
@@ -150,6 +176,7 @@ int main ( int argc,char **argv ) {
 */
 
 	imwrite("connected_comp.jpg", res);
+	imwrite("connected_comp_rect.jpg", rect);
 }
 /*
 Mat CalculerContour(Mat& mat1)
