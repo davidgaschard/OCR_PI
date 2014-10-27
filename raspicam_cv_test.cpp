@@ -11,6 +11,8 @@
 #include "opencv2/core/core.hpp"
 
 using namespace cv;
+void detecCavite();
+
 			//Mat CalculerContour(Mat& mat1);
 int main ( int argc,char **argv ) {
 			/*Mat mat1 = imread("image.jpg", 1);
@@ -40,6 +42,10 @@ int main ( int argc,char **argv ) {
 	int endv1;	// Abscisse de début du premier contour
 	int b = 0;	// Booléen de sortie de boucle
 
+	double t;
+
+	t = (double)getTickCount();
+
 	string name_img = "env_rect_symb_.jpg"; // Nom (à compléter par la valeur) d'une image contenant un symbole
 	string tmp_str;				// Chaine de caractère temporaire pour traitement
 	std::ostringstream convert;		// Variable utilisée pour la conversion d'un entier en chaine de caractère (pour insertion dans le nom de l'image afin de numéroter les images contenant les symboles)
@@ -60,14 +66,30 @@ int main ( int argc,char **argv ) {
 	std::vector<int> vect_x_1;
 	std::vector<int> vect_x_2;
 
+
 	RNG rng(1); // Tirage aléatoire pour les couleurs
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps init : " << t << '\n';
+
+	t = (double)getTickCount();
 
 	if(!img.empty())
 		threshold(img,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
 	else
 		std::cout << "img is empty" << '\n';
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps OTSU : " << t << '\n';
+
+	t = (double)getTickCount();
+
 	imwrite("threshold_im.jpg",bin);
 	bin2 = bin.clone(); // On clone bin car elle va être modifier avec la recherche de contour et on souhaite la conserver pour extraire les enveloppes rectangulaires des symboles et les stocker dans de nouvelles imgaes
+
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps write + clone : " << t << '\n';
+
+	t = (double)getTickCount();
+
 	if(!bin.empty())
 				//findContours(res,contours,hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE); // Recherche des contours des composantes connexes de l'image avec hiérarchie (donc plus long)
 		findContours(bin,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_L1); // Recherche des contours des composantes connexes de l'image
@@ -80,6 +102,12 @@ int main ( int argc,char **argv ) {
 					drawContours(res,contours,i,color,CV_FILLED, 8, hierarchy);
 
 				}*/
+
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps find contours : " << t << '\n';
+
+	t = (double)getTickCount();
+
 	// Initialisation des matrices res et rect sous forme de matrice en couleur. Sans ces lignes, elles seront uniquement en nuances de gris, ce qui est peu pratique pour visualiser la labelisation.
 	res = Mat::zeros(bin.size(), CV_8UC3);
 	rect = Mat::zeros(bin.size(), CV_8UC3);
@@ -93,11 +121,17 @@ int main ( int argc,char **argv ) {
 		}
 	}
 
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps filtrage : " << t << '\n';
+
 	/*
 	Algo de recherche du signe "=".
 	On cherche deux contours dont la moyenne des abscisses de l'un est compris entre l'abscisse min et l'abscisse max de l'autre.
 	Une fois trouvés, on les place à la fin du vecteur afin de les fusionner.
 	*/
+
+	t = (double)getTickCount();
+
 	size_cont = contours_filt.size();
 	i = 0;
 	while (i<size_cont && b == 0)
@@ -155,6 +189,11 @@ int main ( int argc,char **argv ) {
 	contours_filt.pop_back();
 	contours_filt.push_back(cont_eq);
 
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps égal : " << t << '\n';
+
+	t = (double)getTickCount();
+
 	// On effectue désormais divers traitements sur chacun des contours trouvés. Chaque contour correspond désormais à un symbole( y compris pour "=").
 	for(i=0; i<contours_filt.size(); i++)
 	{
@@ -185,10 +224,18 @@ int main ( int argc,char **argv ) {
 			//std::cout << i << '\n';
 			//std::cout << "couleur : " << color[0]<< " " << color[1]<< " " << color[2]<< '\n';
 	}
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps traitement : " << t << '\n';
+
+	t = (double)getTickCount();
 
 	// Stockage des matrices calculées sous forme d'image afin de visualiser
-	imwrite("connected_comp.jpg", res);
-	imwrite("connected_comp_rect.jpg", rect);
+//	imwrite("connected_comp.jpg", res);
+//	imwrite("connected_comp_rect.jpg", rect);
+	detecCavite();
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps 2 images : " << t << '\n';
+
 }
 
 
@@ -201,26 +248,27 @@ int main ( int argc,char **argv ) {
 
 
 
-/*
-Mat CalculerContour(Mat& mat1)
+
+void detecCavite()
 {
-	unsigned char * input = (unsigned char *)(mat1.data);
-	int x_min = 9999;
-	int x_max = -1;
-	int y_min = 9999;
-	int y_max = -1;
-	int b,g,r;
-	for (int i = 0 ; i < mat1.rows ; i++) { //960
-   		for (int j = 0 ; j < 3*mat1.cols ; j = j + 3) { //1280
-			b = (int)input[3*mat1.cols*i+j];
-			g = (int)input[3*mat1.cols*i+j+1];
-			r = (int)input[3*mat1.cols*i+j+2];
-			if ((b < 90) && (r < 90) && (g < 90))
+/*	char d[12] = {255,0,0,0,255,0,0,0,0,255,0,0};
+	Mat bin;
+	Mat mat1(2,2,CV_8UC3,d);
+	threshold(mat1,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
+	std::cout << bin << '\n';
+	imwrite("nomdemerde.jpg", bin);*/
+	bool g=0,b=0,d=0,h=0,c=0;
+	int * input = (int *) (envRect.data)
+	for (int i = 0 ; i < envRect.rows ; i++) {
+   		for (int j = 0 ; j < envRect.cols ; j++) {
+			val = Mat::at(i,j);
+			if(val==0)
 			{
-			    x_min = ((x_min > j/3)? j/3 : x_min) ;
-			    x_max = ((x_max < j/3)? j/3 : x_max) ;
-			    y_min = ((y_min > i)? i : y_min) ;
-			    y_max = ((y_max < i)? i : y_max) ;
+				for(int k = j; k>=0 && g==0; k--)
+				{
+					if(255 == Mat::at(i,j))
+						g = 1;
+				}
 			}
 	   	}
 	}
@@ -236,4 +284,4 @@ Mat CalculerContour(Mat& mat1)
 	Mat ret(Size(1280,960),CV_8UC3, input);
 	return (ret);
 }
-*/
+
