@@ -258,30 +258,56 @@ void detecCavite()
 	std::cout << bin << '\n';
 	imwrite("nomdemerde.jpg", bin);*/
 	bool g=0,b=0,d=0,h=0,c=0;
+	int gauche = 0, droite = 0, bas = 0, haut = 0, central =0;
 	int * input = (int *) (envRect.data)
 	for (int i = 0 ; i < envRect.rows ; i++) {
    		for (int j = 0 ; j < envRect.cols ; j++) {
 			val = Mat::at(i,j);
-			if(val==0)
+			if (val == 0)
 			{
 				for(int k = j; k>=0 && g==0; k--)
 				{
 					if(255 == Mat::at(i,j))
 						g = 1;
 				}
+				for(int k = j; k < envRect.cols && d==0; k++)
+				{
+					if(255 == Mat::at(i,j))
+						d = 1;
+				}
+				for(int k = i; k>=0 && h==0; k--)
+				{
+					if(255 == Mat::at(i,j))
+						h = 1;
+				}
+				for(int k = i; k < envRect.rows && b==0; k++)
+				{
+					if(255 == Mat::at(i,j))
+						b = 1;
+				}
+				if (g == d == b == h == 1)
+				{
+					central++;
+				}
+				if (g == d == h == 1)
+				{
+					bas++;
+				}
+				if (b == d == h == 1)
+				{
+					gauche++;
+				}
+				if (g == b == h == 1)
+				{
+					droite++;
+				}
+				if (g == d == b == 1)
+				{
+					haut++;
+				}
 			}
 	   	}
 	}
-//	std::cout << mat1 << '\n';
-	std::cout << "x_min :" << x_min << " x_max :" << x_max << " y_min : " << y_min << " y_max : " << y_max << '\n';
-	for (int i = y_min ; i < y_max ; i++) { // 960
-		for (int j = x_min ; j < 3*x_max ; j = j + 3) { // 1280
-			input[3*mat1.cols*i+j] = 0;
-			input[3*mat1.cols*i+j+1] = 0;
-			input[3*mat1.cols*i+j+2] = 255;
-   		}
-	}
-	Mat ret(Size(1280,960),CV_8UC3, input);
-	return (ret);
+	cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " central " << central << "\n";
 }
 
