@@ -11,7 +11,8 @@
 #include "opencv2/core/core.hpp"
 
 using namespace cv;
-void detecCavite();
+float * detecCavite(Mat& envRect);
+
 
 			//Mat CalculerContour(Mat& mat1);
 int main ( int argc,char **argv ) {
@@ -141,14 +142,18 @@ int main ( int argc,char **argv ) {
 			vect_x_1.push_back(contours_filt[i][j].x);
 			std::sort(vect_x_1.begin(),vect_x_1.end());
 		}
+		std::cout << "b1" << '\n';
 		k = i+1;
 		while(k<size_cont && b == 0)
 		{
+						std::cout << contours_filt[k].size() << '\n';
 			for(j=0; j<contours_filt[k].size(); j++)
 			{
 				vect_x_2.push_back(contours_filt[k][j].x);
 				std::sort(vect_x_2.begin(),vect_x_2.end());
 			}
+			std::cout << "b2" << '\n';
+
 			medv2 = vect_x_2[vect_x_2.size()/2];
 			debv1 = vect_x_1[0];
 			endv1 = vect_x_1[vect_x_1.size()-1];
@@ -166,9 +171,11 @@ int main ( int argc,char **argv ) {
 			}
 			k++;
 		}
+		std::cout << "b3" << '\n';
+
 		i++;
 	}
-
+	std::cout << "sortie" << '\n';
 	// On a placé les deux contours correspondants aux deux barres du signe "=" à la fin du vecteur "contours_filt".
 	//On fusionne donc les deux derniers éléments de ce vecteur.
 	cont_eq_1 = contours_filt[size_cont-2];
@@ -223,18 +230,23 @@ int main ( int argc,char **argv ) {
 			//std::cout << contours[i] << '\n';
 			//std::cout << i << '\n';
 			//std::cout << "couleur : " << color[0]<< " " << color[1]<< " " << color[2]<< '\n';
-	}
 	t = ((double)getTickCount()-t)/getTickFrequency();
 	std::cout << "temps traitement : " << t << '\n';
 
+
 	t = (double)getTickCount();
+
+		detecCavite(subImage);
+	t = ((double)getTickCount()-t)/getTickFrequency();
+	std::cout << "temps cav : " << t << '\n';
+
+
+	}
+
 
 	// Stockage des matrices calculées sous forme d'image afin de visualiser
 //	imwrite("connected_comp.jpg", res);
 //	imwrite("connected_comp_rect.jpg", rect);
-	detecCavite();
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps 2 images : " << t << '\n';
 
 }
 
@@ -249,7 +261,7 @@ int main ( int argc,char **argv ) {
 
 
 
-void detecCavite()
+float * detecCavite(Mat& envRect)
 {
 /*	char d[12] = {255,0,0,0,255,0,0,0,0,255,0,0};
 	Mat bin;
@@ -257,57 +269,79 @@ void detecCavite()
 	threshold(mat1,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
 	std::cout << bin << '\n';
 	imwrite("nomdemerde.jpg", bin);*/
+	float res[5];
+	int a =0;
+	int val;
+	float sizeMat = envRect.rows*envRect.cols;
 	bool g=0,b=0,d=0,h=0,c=0;
-	int gauche = 0, droite = 0, bas = 0, haut = 0, central =0;
-	int * input = (int *) (envRect.data)
+	float gauche = 0, droite = 0, bas = 0, haut = 0, central =0;
 	for (int i = 0 ; i < envRect.rows ; i++) {
    		for (int j = 0 ; j < envRect.cols ; j++) {
-			val = Mat::at(i,j);
+			val = envRect.at<uchar>(i,j);
 			if (val == 0)
 			{
+				a++;
 				for(int k = j; k>=0 && g==0; k--)
 				{
-					if(255 == Mat::at(i,j))
+					if(255 == envRect.at<uchar>(i,k))
 						g = 1;
 				}
 				for(int k = j; k < envRect.cols && d==0; k++)
 				{
-					if(255 == Mat::at(i,j))
+					if(255 == envRect.at<uchar>(i,k))
 						d = 1;
+
 				}
 				for(int k = i; k>=0 && h==0; k--)
 				{
-					if(255 == Mat::at(i,j))
+					if(255 == envRect.at<uchar>(k,j))
 						h = 1;
 				}
 				for(int k = i; k < envRect.rows && b==0; k++)
 				{
-					if(255 == Mat::at(i,j))
+					if(255 == envRect.at<uchar>(k,j))
 						b = 1;
 				}
-				if (g == d == b == h == 1)
+//				std::cout << " gauche " << g << " droite " << d << " haut " << h << " bas " << b << "\n";
+
+				if (g == 1 && d == 1 && b == 1 && h == 1)
 				{
 					central++;
+//					std::cout << "central : " << central << '\n';
 				}
-				if (g == d == h == 1)
+				else if (g == 1 && d == 1 && h == 1 && b == 0)
 				{
 					bas++;
+//					std::cout <<"bas: " << bas << '\n';
 				}
-				if (b == d == h == 1)
+				else if (b == 1 && d == 1 && h == 1 && g == 0)
 				{
 					gauche++;
+//					std::cout << "gauche: " << gauche << '\n';
 				}
-				if (g == b == h == 1)
+				else if (g == 1 && b == 1 && h == 1 && d == 0)
 				{
 					droite++;
+//					std::cout << "droite: " << droite << '\n';
+
 				}
-				if (g == d == b == 1)
+				else if (g == 1 && d == 1 && b == 1 && h == 0)
 				{
 					haut++;
+//					std::cout << "haut: " << haut << '\n';
+
 				}
 			}
+			g=0;d=0;
+			b=0;h=0;
 	   	}
 	}
-	cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " central " << central << "\n";
+	std::cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " central " << central << "a " << a << "\n";
+	res[0] = gauche/sizeMat;
+	res[1] = droite/sizeMat;
+	res[2] = haut/sizeMat;
+	res[3] = bas/sizeMat;
+	res[4] = central/sizeMat;
+	return res;
 }
 
