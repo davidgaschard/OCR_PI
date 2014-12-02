@@ -12,9 +12,23 @@
 
 using namespace cv;
 float * detecCavite(Mat& envRect);
-
-
-			//Mat CalculerContour(Mat& mat1);
+Mat trouverContour(Mat& img);
+#define DEBUG
+//Mat CalculerContour(Mat& mat1);
+float tab0[10][9];
+float tab1[10][9];
+float tab2[10][9];
+float tab3[10][9];
+float tab4[10][9];
+float tab5[10][9];
+float tab6[10][9];
+float tab7[10][9];
+float tab8[10][9];
+float tab9[10][9];
+float tabPlus[10][9];
+float tabMoins[10][9];
+float tabFois[10][9];
+float tabDivise[10][9];
 int main ( int argc,char **argv ) {
 			/*Mat mat1 = imread("image.jpg", 1);
 			char d[12] = {255,0,0,0,255,0,0,0,255,0,0,0};
@@ -250,31 +264,14 @@ int main ( int argc,char **argv ) {
 
 }
 
-
-
-
-
-
-
-
-
-
-
-
 float * detecCavite(Mat& envRect)
 {
-/*	char d[12] = {255,0,0,0,255,0,0,0,0,255,0,0};
-	Mat bin;
-	Mat mat1(2,2,CV_8UC3,d);
-	threshold(mat1,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
-	std::cout << bin << '\n';
-	imwrite("nomdemerde.jpg", bin);*/
-	float res[5];
+	float res[9];
 	int a =0;
 	int val;
 	float sizeMat = envRect.rows*envRect.cols;
 	bool g=0,b=0,d=0,h=0,c=0;
-	float gauche = 0, droite = 0, bas = 0, haut = 0, central =0;
+	float gauche = 0, droite = 0, bas = 0, haut = 0, central =0, nord_ouest = 0, sud_ouest = 0, nord_est = 0, sud_est = 0;
 	for (int i = 0 ; i < envRect.rows ; i++) {
    		for (int j = 0 ; j < envRect.cols ; j++) {
 			val = envRect.at<uchar>(i,j);
@@ -323,25 +320,105 @@ float * detecCavite(Mat& envRect)
 				{
 					droite++;
 //					std::cout << "droite: " << droite << '\n';
-
 				}
 				else if (g == 1 && d == 1 && b == 1 && h == 0)
 				{
 					haut++;
 //					std::cout << "haut: " << haut << '\n';
-
+				}
+				else if (g == 0 && d == 1 && b == 1 && h == 0)
+				{
+					nord_ouest++;
+//					std::cout << "haut: " << haut << '\n';
+				}
+				else if (g == 1 && d == 0 && b == 1 && h == 0)
+				{
+					nord_est++;
+//					std::cout << "haut: " << haut << '\n';
+				}
+				else if (g == 0 && d == 1 && b == 0 && h == 1)
+				{
+					sud_ouest++;
+//					std::cout << "haut: " << haut << '\n';
+				}
+				else if (g == 1 && d == 0 && b == 0 && h == 1)
+				{
+					sud_est++;
+//					std::cout << "haut: " << haut << '\n';
 				}
 			}
 			g=0;d=0;
 			b=0;h=0;
 	   	}
 	}
-	std::cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " central " << central << "a " << a << "\n";
+	std::cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " nord_ouest " << nord_ouest << " nord_est " << nord_est << " sud_ouest " << sud_ouest << " sud_est " << sud_est << " central " << central << "total " << a << "\n";
 	res[0] = gauche/sizeMat;
 	res[1] = droite/sizeMat;
 	res[2] = haut/sizeMat;
 	res[3] = bas/sizeMat;
 	res[4] = central/sizeMat;
+	res[5] = nord_ouest/sizeMat;
+	res[6] = nord_est/sizeMat;
+	res[7] = sud_ouest/sizeMat;
+	res[8] = sud_est/sizeMat;
+	for (int z = 0 ; z < 9 ; z++) {
+		fwrite(fichier, res[z] ,std:: ::append);
+	}
 	return res;
 }
-
+Mat trouverContour(Mat& img)
+{
+	Mat subImage;
+	long sommeLigne[img.row];
+	long sommeColonne[img.cols];
+	int moyColonne = 0;
+	int moyLigne = 0;
+	int x_min = 0, x_max = 0, y_min = 0, y_max = 0;
+	int x_min_tmp, x_max_tmp, y_min_tmp, y_max_tmp;
+	Point hg, hd;
+	for (int i = 0 ; i < img.rows ; i++) {
+		for (int j = 0 ; j < img.cols ; j++) {
+			sommeLigne[i] += img[i][j];
+			sommeColonne[j] += img[i][j];
+		}
+		sommeLigne[i] /= img.rows;
+	}
+	for (int j = 0 ; j < img.cols ; j++) {
+		sommeColonne[j] /= img.cols;
+		moyColonne += sommeColonne[j];
+	}
+	moyColonne /= img.cols;
+	for (int j = 0 ; j < img.rows ; j++) {
+		sommeLigne[j] /= img.rows;
+		moyligne[j] += sommeLigne[j];
+	}
+	moyligne /= img.rows;
+	for (int j = 0 ; j < img.rows ; j++) {
+		if (sommeLigne[j] > moyenneLigne) {
+			x_min_tmp = sommeLigne[j];
+			while (j < img.rows && sommeLigne[j] > moyenneLigne)
+				j++;
+			x_max_tmp = j--;
+			if (x_max_tmp - x_min_tmp > x_max - x_min) {
+				x_max = x_max_tmp;
+				x_min = x_min_tmp;
+			}
+		}
+	}
+	for (int j = 0 ; j < img.cols ; j++) {
+		if (sommeColonne[j] > moyenneColonne) {
+			y_min_tmp = sommeColonne[j];
+			while (j < img.cols && sommeColonne[j] > moyenneColonne)
+				j++;
+			y_max_tmp = j--;
+			if (y_max_tmp - y_min_tmp > y_max - y_min) {
+				y_max = y_max_tmp;
+				y_min = y_min_tmp;
+			}
+		}
+	}
+	hg = (x_min, y_max);
+	bd = (x_max, y_min);
+	subImage = Mat(img,Rect(pt1,pt2));
+	imwrite("sub_image.jpg", subImage);
+}
