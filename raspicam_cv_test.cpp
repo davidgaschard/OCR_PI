@@ -29,6 +29,7 @@ float tabPlus[10][9];
 float tabMoins[10][9];
 float tabFois[10][9];
 float tabDivise[10][9];
+std::vector<std::vector<Point> > contours_filt;
 int main ( int argc,char **argv ) {
 			/*Mat mat1 = imread("image.jpg", 1);
 			char d[12] = {255,0,0,0,255,0,0,0,255,0,0,0};
@@ -41,13 +42,11 @@ int main ( int argc,char **argv ) {
 	Mat img = imread("pic_init.jpg",0); // Image initiale
 	Mat bin;			    // Image binaire (Noir et blanc après seuil)
 	Mat bin2;			    // Clone de bin afin de la sauvegarder avant la recherche de contours
-	Mat res;		  	    // Image labelisée
-	Mat rect;			    // Image labelisée avec enveloppe rectangulaire
-	Mat subImage;			    // Image rectangulaire contenant un unique symbole
+	//Mat res;		  	    // Image labelisée
+	//Mat rect;			    // Image labelisée avec enveloppe rectangulaire
+	//Mat subImage;			    // Image rectangulaire contenant un unique symbole
 
-	int i = 0;	// Variable de boucle
-	int j = 0;	// Variable de boucle
-	int k = 0;	// Variable de boucle
+	int i = 0, j = 0, k = 0;
 	int size_cont;  // Nombre de contours après filtrage (i.e. nombre de symboles en comptant le signe "=" comme deux)
 	//Les 5 prochaines variables sont utilisées pour condenser le signe "=" en un seul symbole
 	int size_1;	// Nombre de points d'un contour
@@ -58,17 +57,16 @@ int main ( int argc,char **argv ) {
 	int b = 0;	// Booléen de sortie de boucle
 
 	double t;
-
 	t = (double)getTickCount();
 
-	string name_img = "env_rect_symb_.jpg"; // Nom (à compléter par la valeur) d'une image contenant un symbole
-	string tmp_str;				// Chaine de caractère temporaire pour traitement
-	std::ostringstream convert;		// Variable utilisée pour la conversion d'un entier en chaine de caractère (pour insertion dans le nom de l'image afin de numéroter les images contenant les symboles)
+	//string name_img = "env_rect_symb_.jpg"; // Nom (à compléter par la valeur) d'une image contenant un symbole
+	//string tmp_str;				// Chaine de caractère temporaire pour traitement
+	//std::ostringstream convert;		// Variable utilisée pour la conversion d'un entier en chaine de caractère (pour insertion dans le nom de l'image afin de numéroter les images contenant les symboles)
 
-	Point pt1; // Point en haut à droite d'un rectangle correspondant à une enveloppe rectangulaire
-	Point pt2; // Idem en bas à gauche
+	//Point pt1; // Point en haut à droite d'un rectangle correspondant à une enveloppe rectangulaire
+	//Point pt2; // Idem en bas à gauche
 
-	Scalar color; // Couleur aléatoire, permettant de visualiser la labelisation
+	//Scalar color; // Couleur aléatoire, permettant de visualiser la labelisation
 
 	std::vector<std::vector<Point> > contours; 	// Contient les points servant à définir les contours des symboles
 	std::vector<std::vector<Point> > contours_filt; // Contient les points servant à définir les contours de symboles après filtrage (1 contour = 1 symboles, sauf pour "=")
@@ -82,50 +80,26 @@ int main ( int argc,char **argv ) {
 	std::vector<int> vect_x_2;
 
 
-	RNG rng(1); // Tirage aléatoire pour les couleurs
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps init : " << t << '\n';
+	//RNG rng(1); // Tirage aléatoire pour les couleurs
 
-	t = (double)getTickCount();
 
 	if(!img.empty())
 		threshold(img,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
 	else
 		std::cout << "img is empty" << '\n';
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps OTSU : " << t << '\n';
-
-	t = (double)getTickCount();
-
-	imwrite("threshold_im.jpg",bin);
+	#ifdef DEBUG
+		imwrite("threshold_im.jpg",bin);
+	#endif
 	bin2 = bin.clone(); // On clone bin car elle va être modifier avec la recherche de contour et on souhaite la conserver pour extraire les enveloppes rectangulaires des symboles et les stocker dans de nouvelles imgaes
 
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps write + clone : " << t << '\n';
-
-	t = (double)getTickCount();
-
 	if(!bin.empty())
-				//findContours(res,contours,hierarchy, CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE); // Recherche des contours des composantes connexes de l'image avec hiérarchie (donc plus long)
 		findContours(bin,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_L1); // Recherche des contours des composantes connexes de l'image
 	else
 		std::cout << "bin is empty" << '\n';
 
-				/*for(i=0;i>=0;i = hierarchy[i][0]) //Remplissage des contours avec hiérarchie (donc plus long)
-				{
-					Scalar color (rand()%255, rand()%255, rand()%255);
-					drawContours(res,contours,i,color,CV_FILLED, 8, hierarchy);
-
-				}*/
-
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps find contours : " << t << '\n';
-
-	t = (double)getTickCount();
-
 	// Initialisation des matrices res et rect sous forme de matrice en couleur. Sans ces lignes, elles seront uniquement en nuances de gris, ce qui est peu pratique pour visualiser la labelisation.
-	res = Mat::zeros(bin.size(), CV_8UC3);
-	rect = Mat::zeros(bin.size(), CV_8UC3);
+	//res = Mat::zeros(bin.size(), CV_8UC3);
+	//rect = Mat::zeros(bin.size(), CV_8UC3);
 
 	// La recherche de contours repère plein de pixels ou groupe de pixels isolés qui ne sont pas des symboles et qu'il faut donc filtrer.
 	for(i=0; i<contours.size(); i++)
@@ -135,9 +109,6 @@ int main ( int argc,char **argv ) {
 			contours_filt.push_back(contours[i]);
 		}
 	}
-
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps filtrage : " << t << '\n';
 	std::cout << "taille contour " << contours.size() << " taille contour_filt " << contours_filt.size() << std::endl;
 	/*
 	Algo de recherche du signe "=".
@@ -208,14 +179,10 @@ int main ( int argc,char **argv ) {
 	}
 	contours_filt.pop_back();
 	contours_filt.pop_back();
-	contours_filt.push_back(cont_eq);
+	contours_filt.push_back(cont_eq);*/
 
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps égal : " << t << '\n';*/
 
-	t = (double)getTickCount();
-
-	// On effectue désormais divers traitements sur chacun des contours trouvés. Chaque contour correspond désormais à un symbole( y compris pour "=").
+	/*// On effectue désormais divers traitements sur chacun des contours trouvés. Chaque contour correspond désormais à un symbole( y compris pour "=").
 	for(i=0; i<contours_filt.size(); i++)
 	{
 		color = Scalar(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255)); // Calcul du couleur aléatoire pour visualiser la labelisation
@@ -244,25 +211,68 @@ int main ( int argc,char **argv ) {
 			//std::cout << contours[i] << '\n';
 			//std::cout << i << '\n';
 			//std::cout << "couleur : " << color[0]<< " " << color[1]<< " " << color[2]<< '\n';
+
+		detecCavite(subImage);
+	}*/
+
 	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps traitement : " << t << '\n';
-
-
-	t = (double)getTickCount();
-
-	detecCavite(subImage);
-	t = ((double)getTickCount()-t)/getTickFrequency();
-	std::cout << "temps cav : " << t << '\n';
-
-
-	}
-
-
-	// Stockage des matrices calculées sous forme d'image afin de visualiser
-	imwrite("connected_comp.jpg", res);
-	imwrite("connected_comp_rect.jpg", rect);
-
+	std::cout << "temps du programme : " << t << '\n';
 }
+
+
+void CalculSymbole()
+{
+	Scalar color;
+	RNG rng(1);
+	Mat res, rect, subImage;
+	Point pt1; // Point en haut à droite d'un rectangle correspondant à une enveloppe rectangulaire
+	Point pt2; // Idem en bas à gauche
+	std::ostringstream convert;		// Variable utilisée pour la conversion d'un entier en chaine de caractère (pour insertion dans le nom de l'image afin de numéroter les images contenant les symboles)
+	string tmp_str;				// Chaine de caractère temporaire pour traitement
+	string name_img = "env_rect_symb_.jpg"; // Nom (à compléter par la valeur) d'une image contenant un symbole
+	res = Mat::zeros(bin.size(), CV_8UC3);
+	rect = Mat::zeros(bin.size(), CV_8UC3);
+	// On effectue désormais divers traitements sur chacun des contours trouvés. Chaque contour correspond désormais à un symbole( y compris pour "=").
+	for(int i=0; i<contours_filt.size(); i++)
+	{
+		color = Scalar(rng.uniform(0,255),rng.uniform(0,255),rng.uniform(0,255)); // Calcul du couleur aléatoire pour visualiser la labelisation
+
+		// Remplissage des symboles avec la couleur générée pour les images labelisées et labelisées avec enveloppe rectangulaire
+		drawContours(res,contours_filt,i,color,CV_FILLED, 8);
+		drawContours(rect,contours_filt,i,color,CV_FILLED, 8);
+
+		// Calcul deux points remarquables du rectangle entourant le symbole étudié
+		pt1 = boundingRect(contours_filt[i]).tl();
+		pt2 = boundingRect(contours_filt[i]).br();
+
+		rectangle(rect,pt1,pt2,color,2,8,0); // Trace le rectangle en question avec la couleur générée
+
+		// Convertit "i" en chaine de caractère pour numéroter les images extraites
+		convert.str("");
+		convert << i;
+		tmp_str = convert.str();
+
+		// Complète le nom de l'image avec son numéro (i)
+		name_img.replace(name_img.begin()+13,name_img.begin()+14,tmp_str);
+		std::cout << name_img << '\n';
+		// Extrait de l'image binaire la partie correspondant à l'enveloppe rectangulaire du symbole étudié et la stocke dans une nouvelle image.
+		subImage = Mat(bin2,Rect(pt1,pt2));
+		imwrite (name_img, subImage);
+		detecCavite(subImage);
+	}
+	#ifdef DEBUG
+		// Stockage des matrices calculées sous forme d'image afin de visualiser
+		imwrite("connected_comp.jpg", res);
+		imwrite("connected_comp_rect.jpg", rect);
+	#endif
+}
+
+
+
+
+
+
+
 
 float * detecCavite(Mat& envRect)
 {
