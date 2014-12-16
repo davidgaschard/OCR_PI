@@ -12,7 +12,7 @@
 
 using namespace cv;
 void detecCavite(Mat& envRect);
-Mat trouverContour(Mat& img);
+void trouverContour(Mat& img);
 void CalculSymbole();
 float res[9];
 #define DEBUG
@@ -31,15 +31,15 @@ float tabPlus[10][9];
 float tabMoins[10][9];
 float tabFois[10][9];
 float tabDivise[10][9];
-	Mat bin;			    // Image binaire (Noir et blanc après seuil)
-	Mat bin2;			    // Clone de bin afin de la sauvegarder avant la recherche de contours
+Mat bin;			    // Image binaire (Noir et blanc après seuil)
+Mat bin2;			    // Clone de bin afin de la sauvegarder avant la recherche de contours
 
 std::vector<std::vector<Point> > contours_filt;
 int main ( int argc,char **argv ) {
 //Declaration des variables
 
-	Mat img = imread("pic_init.jpg",0); // Image initiale
-
+	Mat img = imread("sub_image.jpg",0); // Image initiale
+	imwrite("test0.jpg", img);
 	int i = 0, j = 0, k = 0;
 	int size_cont;  // Nombre de contours après filtrage (i.e. nombre de symboles en comptant le signe "=" comme deux)
 	//Les 5 prochaines variables sont utilisées pour condenser le signe "=" en un seul symbole
@@ -63,39 +63,41 @@ int main ( int argc,char **argv ) {
 	std::vector<int> vect_x_2;
 
 
-
-	if(!img.empty())
+	trouverContour(img);
+	if(!img.empty()) {
 		threshold(img,bin,0,255,THRESH_BINARY_INV+THRESH_OTSU); // Seuil via algo OTSU : convertit une image en une image binaire ("vrai" noir et blanc)
-	else
+	}
+	else {
 		std::cout << "img is empty" << '\n';
+		exit(0);
+	}
 	#ifdef DEBUG
 		imwrite("threshold_im.jpg",bin);
 	#endif
 	bin2 = bin.clone(); // On clone bin car elle va être modifier avec la recherche de contour et on souhaite la conserver pour extraire les enveloppes rectangulaires des symboles et les stocker dans de nouvelles imgaes
 
-	if(!bin.empty())
+	if(!bin.empty()) {
 		findContours(bin,contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_TC89_L1); // Recherche des contours des composantes connexes de l'image
-	else
+	}
+	else {
 		std::cout << "bin is empty" << '\n';
+		exit(0);
+	}
 
 
 	// La recherche de contours repère plein de pixels ou groupe de pixels isolés qui ne sont pas des symboles et qu'il faut donc filtrer.
-	for(i=0; i<contours.size(); i++)
-	{
-		if (contours[i].size() > 5) // La valeur de 100 est ARBITRAIRE et fonctionne pour l'image utilisée pour test. A revoir.
-		{
+	for(i=0; i<contours.size(); i++) {
+		if (contours[i].size() > 5) // La valeur est ARBITRAIRE
 			contours_filt.push_back(contours[i]);
-		}
 	}
 	std::cout << "taille contour " << contours.size() << " taille contour_filt " << contours_filt.size() << std::endl;
-	/*
-	Algo de recherche du signe "=".
-	On cherche deux contours dont la moyenne des abscisses de l'un est compris entre l'abscisse min et l'abscisse max de l'autre.
-	Une fois trouvés, on les place à la fin du vecteur afin de les fusionner.
-	*/
+	
+	//Algo de recherche du signe "=".
+	//On cherche deux contours dont la moyenne des abscisses de l'un est compris entre l'abscisse min et l'abscisse max de l'autre.
+	//Une fois trouvés, on les place à la fin du vecteur afin de les fusionner.
+	
 
-	/*t = (double)getTickCount();
-
+	t = (double)getTickCount();
 	size_cont = contours_filt.size();
 	i = 0;
 	while (i<size_cont && b == 0)
@@ -105,28 +107,20 @@ int main ( int argc,char **argv ) {
 			vect_x_1.push_back(contours_filt[i][j].x);
 			std::sort(vect_x_1.begin(),vect_x_1.end());
 		}
-		std::cout << "b1" << '\n';
 		k = i+1;
 		while(k<size_cont && b == 0)
 		{
-						std::cout << contours_filt[k].size() << '\n';
 			for(j=0; j<contours_filt[k].size(); j++)
 			{
 				vect_x_2.push_back(contours_filt[k][j].x);
 				std::sort(vect_x_2.begin(),vect_x_2.end());
 			}
-			std::cout << "b2" << '\n';
 
 			medv2 = vect_x_2[vect_x_2.size()/2];
 			debv1 = vect_x_1[0];
-			endv1 = vect_x_1[vect_x_1.size()-1];*/
+			endv1 = vect_x_1[vect_x_1.size()-1];
 
-				//std::cout << "i : " << i << '\n';
-				//std::cout << "k : " << k << '\n';
-				//std::cout << "medv2 : " << medv2 << '\n';
-				//std::cout << "debv1 : " << debv1 << '\n';
-				//std::cout << "endv1 : " << endv1 << '\n';*/
-			/*if(medv2 > debv1 && medv2 < endv1)
+			if(medv2 > debv1 && medv2 < endv1)
 			{
 				contours_filt[k].swap(contours_filt[size_cont-2]);
 				contours_filt[i].swap(contours_filt[size_cont-1]);
@@ -134,14 +128,11 @@ int main ( int argc,char **argv ) {
 			}
 			k++;
 		}
-		std::cout << "b3" << '\n';
-
 		i++;
 	}
-	std::cout << "sortie" << '\n';*/
 	// On a placé les deux contours correspondants aux deux barres du signe "=" à la fin du vecteur "contours_filt".
 	//On fusionne donc les deux derniers éléments de ce vecteur.
-	/*cont_eq_1 = contours_filt[size_cont-2];
+	cont_eq_1 = contours_filt[size_cont-2];
 	cont_eq_2 = contours_filt[size_cont-1];
 	size_1 = cont_eq_1.size();
 	size_2 = cont_eq_2.size();
@@ -157,12 +148,11 @@ int main ( int argc,char **argv ) {
 	}
 	contours_filt.pop_back();
 	contours_filt.pop_back();
-	contours_filt.push_back(cont_eq);*/
+	contours_filt.push_back(cont_eq);
 	CalculSymbole();
 	t = ((double)getTickCount()-t)/getTickFrequency();
 	std::cout << "temps du programme : " << t << '\n';
 }
-
 
 void CalculSymbole()
 {
@@ -198,10 +188,9 @@ void CalculSymbole()
 
 		// Complète le nom de l'image avec son numéro (i)
 		name_img.replace(name_img.begin()+13,name_img.begin()+14,tmp_str);
-		std::cout << name_img << '\n';
 		// Extrait de l'image binaire la partie correspondant à l'enveloppe rectangulaire du symbole étudié et la stocke dans une nouvelle image.
 		subImage = Mat(bin2,Rect(pt1,pt2));
-		imwrite (name_img, subImage);
+//		imwrite (name_img, subImage);
 		detecCavite(subImage);
 	}
 	#ifdef DEBUG
@@ -210,12 +199,6 @@ void CalculSymbole()
 		imwrite("connected_comp_rect.jpg", rect);
 	#endif
 }
-
-
-
-
-
-
 
 void detecCavite(Mat& envRect)
 {
@@ -252,52 +235,41 @@ void detecCavite(Mat& envRect)
 					if(255 == envRect.at<uchar>(k,j))
 						b = 1;
 				}
-//				std::cout << " gauche " << g << " droite " << d << " haut " << h << " bas " << b << "\n";
-
 				if (g == 1 && d == 1 && b == 1 && h == 1)
 				{
 					central++;
-//					std::cout << "central : " << central << '\n';
 				}
 				else if (g == 1 && d == 1 && h == 1 && b == 0)
 				{
 					bas++;
-//					std::cout <<"bas: " << bas << '\n';
 				}
 				else if (b == 1 && d == 1 && h == 1 && g == 0)
 				{
 					gauche++;
-//					std::cout << "gauche: " << gauche << '\n';
 				}
 				else if (g == 1 && b == 1 && h == 1 && d == 0)
 				{
 					droite++;
-//					std::cout << "droite: " << droite << '\n';
 				}
 				else if (g == 1 && d == 1 && b == 1 && h == 0)
 				{
 					haut++;
-//					std::cout << "haut: " << haut << '\n';
 				}
 				else if (g == 0 && d == 1 && b == 1 && h == 0)
 				{
 					nord_ouest++;
-//					std::cout << "haut: " << haut << '\n';
 				}
 				else if (g == 1 && d == 0 && b == 1 && h == 0)
 				{
 					nord_est++;
-//					std::cout << "haut: " << haut << '\n';
 				}
 				else if (g == 0 && d == 1 && b == 0 && h == 1)
 				{
 					sud_ouest++;
-//					std::cout << "haut: " << haut << '\n';
 				}
 				else if (g == 1 && d == 0 && b == 0 && h == 1)
 				{
 					sud_est++;
-//					std::cout << "haut: " << haut << '\n';
 				}
 			}
 			g=0;d=0;
@@ -313,7 +285,7 @@ void detecCavite(Mat& envRect)
 	res[6] = nord_est/sizeMat;
 	res[7] = sud_ouest/sizeMat;
 	res[8] = sud_est/sizeMat;
-	std::cout << " gauche " << res[0] << " droite " << res[1] << " haut " << haut << " bas " << bas << " nord_ouest " << nord_ouest << " nord_est " << nord_est << " sud_ouest " << sud_ouest << " sud_est " << sud_est << " central " << central << "total " << a << "\n";
+	//std::cout << " gauche " << res[0] << " droite " << res[1] << " haut " << haut << " bas " << bas << " nord_ouest " << nord_ouest << " nord_est " << nord_est << " sud_ouest " << sud_ouest << " sud_est " << sud_est << " central " << central << "total " << a << "\n";
 	fichier.open("test0.txt", std::ios_base::app);
 	for (int z = 0 ; z < 9 ; z++) {
 		fichier << res[z] << " ; ";
@@ -321,37 +293,47 @@ void detecCavite(Mat& envRect)
 	fichier << std::endl;
 	fichier.close();
 }
-/*Mat trouverContour(Mat& image)
+
+void trouverContour(Mat& img)
 {
 	Mat subImage;
-	long sommeLigne[img.rows];
-	long sommeColonne[img.cols];
+	int sommeLigne[img.rows];
+	int sommeColonne[img.cols];
 	int moyColonne = 0;
 	int moyLigne = 0;
+	int zz = 0;
 	int x_min = 0, x_max = 0, y_min = 0, y_max = 0;
 	int x_min_tmp, x_max_tmp, y_min_tmp, y_max_tmp;
-	Point hg, hd;
+	for (int j = 0 ; j < img.cols ; j++) {
+		sommeColonne[j] = 0;
+	}
+	for (int j = 0 ; j < img.rows ; j++) {
+		sommeLigne[j] = 0;
+	}
 	for (int i = 0 ; i < img.rows ; i++) {
 		for (int j = 0 ; j < img.cols ; j++) {
-			sommeLigne[i] += img[i][j];
-			sommeColonne[j] += img[i][j];
+			sommeLigne[i] += (int)img.at<uchar>(i,j);
+			sommeColonne[j] += (int)img.at<uchar>(i,j);
 		}
-		sommeLigne[i] /= img.rows;
+		sommeLigne[i] /= img.cols;
 	}
 	for (int j = 0 ; j < img.cols ; j++) {
-		sommeColonne[j] /= img.cols;
+		sommeColonne[j] /= img.rows;
 		moyColonne += sommeColonne[j];
 	}
 	moyColonne /= img.cols;
+	std:: cout << "moyColonne : " << moyColonne << " nb Colonnes : " << img.cols << std::endl;
+	
 	for (int j = 0 ; j < img.rows ; j++) {
-		sommeLigne[j] /= img.rows;
-		moyLigne[j] += sommeLigne[j];
+		moyLigne += sommeLigne[j];
 	}
+	
 	moyLigne /= img.rows;
+	std:: cout << "moyLigne : " << moyLigne << " nb Lignes : "<< img.rows << std::endl;
 	for (int j = 0 ; j < img.rows ; j++) {
-		if (sommeLigne[j] > moyLigne) {
-			x_min_tmp = sommeLigne[j];
-			while (j < img.rows && sommeLigne[j] > moyLigne)
+		if (sommeLigne[j] < moyLigne) {
+			x_min_tmp = j;
+			while (j < img.rows && sommeLigne[j] < moyLigne)
 				j++;
 			x_max_tmp = j--;
 			if (x_max_tmp - x_min_tmp > x_max - x_min) {
@@ -362,7 +344,7 @@ void detecCavite(Mat& envRect)
 	}
 	for (int j = 0 ; j < img.cols ; j++) {
 		if (sommeColonne[j] > moyColonne) {
-			y_min_tmp = sommeColonne[j];
+			y_min_tmp = j;
 			while (j < img.cols && sommeColonne[j] > moyColonne)
 				j++;
 			y_max_tmp = j--;
@@ -372,8 +354,9 @@ void detecCavite(Mat& envRect)
 			}
 		}
 	}
-	hg = (x_min, y_max);
-	bd = (x_max, y_min);
-	subImage = Mat(img,Rect(pt1,pt2));
+	std::cout << x_min << " - " << x_max << " - " << y_min << " - " <<  y_max << std::endl;
+	Point hg(x_min,  y_max);
+	Point bd(x_max, y_min);
+	subImage = Mat(img,Rect(hg,bd));
 	imwrite("sub_image.jpg", subImage);
-}*/
+}
