@@ -140,24 +140,7 @@ int main ( int argc,char **argv ) {
 	adaptiveThreshold(img,img14,255,ADAPTIVE_THRESH_MEAN_C,THRESH_BINARY,ch,14);
 	adaptiveThreshold(img,img15,255,ADAPTIVE_THRESH_MEAN_C,THRESH_BINARY,ch,15);*/
 	#ifdef DEBUG
-/*		imwrite("filtre_gaussienm10.jpg",imgm10);
-		imwrite("filtre_gaussienm1.jpg",imgm1);
-		imwrite("filtre_gaussien0.jpg",img0);
-		imwrite("filtre_gaussien1.jpg",img1);
-		imwrite("filtre_gaussien2.jpg",img2);
-		imwrite("filtre_gaussien3.jpg",img3);
-		imwrite("filtre_gaussien4.jpg",img4);
-		imwrite("filtre_gaussien5.jpg",img5);
-		imwrite("filtre_gaussien6.jpg",img6);
-		imwrite("filtre_gaussien7.jpg",img7);*/
 		imwrite("filtre_gaussien8.jpg",img);
-/*		imwrite("filtre_gaussien9.jpg",img9);
-		imwrite("filtre_gaussien10.jpg",img10);
-		imwrite("filtre_gaussien11.jpg",img11);
-		imwrite("filtre_gaussien12.jpg",img12);
-		imwrite("filtre_gaussien13.jpg",img13);
-		imwrite("filtre_gaussien14.jpg",img14);
-		imwrite("filtre_gaussien15.jpg",img15);*/
 	#endif
 	std::cout << " filtre gaussien ok " << std::endl ;
 
@@ -747,31 +730,20 @@ void compDistance(float * cavite)
 // Lecture d'un ficher contenant 14 points de référence (un par symbole) afin de chercher la proximité du point à reconnaitre avec plusieurs échantillons
 void lectureFic(int num_fichier)
 {
-	int i,j;
-//	string nom_fichier = "cavite1.txt";
+	std::stringstream ss;
 	std::ifstream fichier;
-	switch(num_fichier)
-	{
-	case 1:
-		fichier.open("cavite1.txt", std::ios::in);
-		break;
-	case 2:
-		fichier.open("cavite2.txt", std::ios::in);
-		break;
-	case 3:
-		fichier.open("cavite3.txt", std::ios::in);
-		break;
-	}
+	ss << num_fichier;
+	std::string str = ss.str();
+	std::string nom = "cavite" + str + ".txt";
+	fichier.open(nom.c_str(), std::ios::in);
 	if(fichier)
 	{
-		for(i=0;i<14;i++)
+		for(int i=0;i<14;i++)
 		{
-			for(j=0;j<9;j++)
+			for(int j=0;j<9;j++)
 			{
 				fichier >> cav_moyenne[i][j];
-//				std::cout << " Cav "<< i << " " << j << " " << cav_moyenne[i][j];
 			}
-//			std::cout << std::endl;
 		}
 	}
 	fichier.close();
