@@ -15,6 +15,9 @@
 #define nbr_fichier 3 // Nombre de fichiers contenant des vecteurs de cavités (BDD)
 
 using namespace cv;
+void remplirCavite(int numfic);
+void remplirCov(int numfic);
+int ppv(float * cavite); // 13 plus proches voisins
 void lectureFic(int num_fichier);
 int effectuerCalcul();
 void detecCavite(Mat& envRect);
@@ -42,6 +45,107 @@ float tabPlus[10][9];
 float tabMoins[10][9];
 float tabFois[10][9];
 float tabDivise[10][9];
+
+float tab_cavite[13][23][9]; // BDD
+float nbr_voisins[13];
+
+// Tentative de déclaration de matrices pour le calcul de la distance de Mahalanobis. A garder au cas où on se dirige dessus finalement.
+
+//Mat cov0 = Mat::Mat();
+//Mat cov0(7,7,CV32FC2,Scalar(1,3));
+//cov0.create(100,60,CV_8UC(15));
+//Mat cov0 = Mat::zeros(9,9,CV_32F);
+//Mat cov0 = (Mat_<float>(9,9));
+//Mat cov1 = (Mat_<float>(9,9));
+/*Mat cov2 = (Mat_<float>(9,9));
+Mat cov3 = (Mat_<float>(9,9));
+Mat cov4 = (Mat_<float>(9,9));
+Mat cov5 = (Mat_<float>(9,9));
+Mat cov6 = (Mat_<float>(9,9));
+Mat cov7 = (Mat_<float>(9,9));
+Mat cov8 = (Mat_<float>(9,9));
+Mat cov9 = (Mat_<float>(9,9));
+Mat covplus = (Mat_<float>(9,9));
+Mat covmult = (Mat_<float>(9,9));
+Mat cov1(9,9,CV_32F);
+/*Mat cov2(9,9,float);
+Mat cov3(9,9,float);
+Mat cov4(9,9,float);
+Mat cov5(9,9,float);
+Mat cov6(9,9,float);
+Mat cov7(9,9,float);
+Mat cov8(9,9,float);
+Mat cov9(9,9,float);
+Mat covplus(9,9,float);
+Mat covmult(9,9,float);*/
+
+/*float cov1[9][9];
+float cov2[9][9];
+float cov3[9][9];
+float cov4[9][9];
+float cov5[9][9];
+float cov6[9][9];
+float cov7[9][9];
+float cov8[9][9];
+float cov9[9][9];
+float covplus[9][9];
+float covmult[9][9];*/
+
+//float vectmoy[12][9];
+/*Mat vectmoy0(9,1,float);
+Mat vectmoy1(9,1,float);
+Mat vectmoy2(9,1,float);
+Mat vectmoy3(9,1,float);
+Mat vectmoy4(9,1,float);
+Mat vectmoy5(9,1,float);
+Mat vectmoy6(9,1,float);
+Mat vectmoy7(9,1,float);
+Mat vectmoy8(9,1,float);
+Mat vectmoy9(9,1,float);
+Mat vectmoyplus(9,1,float);
+Mat vectmoymult(9,1,float);*/
+/*Mat vectmoy0 = (Mat_<float>(9,1));
+Mat vectmoy1 = (Mat_<float>(9,1));
+Mat vectmoy2 = (Mat_<float>(9,1));
+Mat vectmoy3 = (Mat_<float>(9,1));
+Mat vectmoy4 = (Mat_<float>(9,1));
+Mat vectmoy5 = (Mat_<float>(9,1));
+Mat vectmoy6 = (Mat_<float>(9,1));
+Mat vectmoy7 = (Mat_<float>(9,1));
+Mat vectmoy8 = (Mat_<float>(9,1));
+Mat vectmoy9 = (Mat_<float>(9,1));
+Mat vectmoyplus = (Mat_<float>(9,1));
+Mat vectmoymult = (Mat_<float>(9,1));*/
+
+/*
+Mat vectres0(9,1,float);
+Mat vectres1(9,1,float);
+Mat vectres2(9,1,float);
+Mat vectres3(9,1,float);
+Mat vectres4(9,1,float);
+Mat vectres5(9,1,float);
+Mat vectres6(9,1,float);
+Mat vectres7(9,1,float);
+Mat vectres8(9,1,float);
+Mat vectres9(9,1,float);
+Mat vectresplus(9,1,float);
+Mat vectresmult(9,1,float);*/
+/*Mat vectres0 = (Mat_<float>(9,1));
+Mat vectres1 = (Mat_<float>(9,1));
+Mat vectres2 = (Mat_<float>(9,1));
+Mat vectres3 = (Mat_<float>(9,1));
+Mat vectres4 = (Mat_<float>(9,1));
+Mat vectres5 = (Mat_<float>(9,1));
+Mat vectres6 = (Mat_<float>(9,1));
+Mat vectres7 = (Mat_<float>(9,1));
+Mat vectres8 = (Mat_<float>(9,1));
+Mat vectres9 = (Mat_<float>(9,1));
+Mat vectresplus = (Mat_<float>(9,1));
+Mat vectresmult = (Mat_<float>(9,1));*/
+
+
+
+
 Mat bin;			    // Image binaire (Noir et blanc après seuil)
 Mat bin2;			    // Clone de bin afin de la sauvegarder avant la recherche de contours
 int res_calcul;
@@ -52,7 +156,7 @@ std::vector<Mat> symb_ordre;
 std::vector<Mat> symb_ordre_fin;
 int valeur_symbole[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 // Ouest - Est - Nord - Sud - Central - Nord Ouest - Nord Est - Sud Ouest - Sud est
-// 0-9 - Plus - Div - Mult
+// 0-9 - Plus - Div - Mult - Moins
 float cav_moyenne[14][9] = {{0.0001,0.0009,0.0056,0,0.4585,0.1260,0.0252,0.0224,0.1106},{0.1319,0.0003,0.0098,0.0572,0.2487,0.0795,0.06313,0.0864},{0.1549,0.1599,0.0026,0.0070,0.1037,0.1813,0.1354,0.0176,0.0338},{0.3135,0.0476,0.0017,0.0008,0.0298,0.1149,0.0827,0.0607,0.1301},{0.0059,0.0553,0.0065,0.0039,0.0663,0.1047,0.0495,0.0760,0.0987},{0.1987,0.2014,0.0024,0.0005,0.0243,0.1682,0.0159,0.0416,0.1500},{0,0.1687,0,0.0003,0.1688,0.2111,0.0203,0.0246,0.2279},{0.2147,0.0499,0.0047,0.0043,0.0417,0.0771,0.0054,0.1062,0.3152},{0.0461,0.0569,0.0033,0.0009,0.2818,0.1565,0.0113,0.0167,0.1849},{0.1969,0.0210,0.0040,0.0019,0.2006,0.1467,0.0187,0.0733,0.1148},{0.0045,0.0404,0.0160,0.0168,0.0037,0.1739,0.1496,0.1770,0.2611},{0,0,0,0.0008,0,0.4056,0.0002,0.0002,0.5158},{0.0450,0.0963,0.1069,0.1029,0.0024,0.2173,0.0134,0.632,0.2088},{0.21,0.05,0,0.01,0.03,0.17,0.31,0,0}};
 //float cav_moyenne[14][9];
 std::vector<std::vector<Point> > contours_filt;
@@ -60,6 +164,7 @@ int main ( int argc,char **argv ) {
 //Declaration des variables
 
 	Mat img = imread("pic_init.jpg",1); // Image initiale
+//	Mat::img.at(0,0) = 0;
 /*	Mat imgm10;
 	Mat imgm1;
 	Mat img0;
@@ -241,12 +346,16 @@ int main ( int argc,char **argv ) {
 	contours_filt.pop_back();
 	contours_filt.pop_back();
 	contours_filt.push_back(cont_eq);*/
-
+	for(i=0;i<13;i++)
+		remplirCavite(i);
+//	std::cout << "avant CalculSymbole";
 	CalculSymbole();
 	t = ((double)getTickCount()-t)/getTickFrequency();
 	std::cout << "temps du programme : " << t << '\n';
-	res_calcul = effectuerCalcul(); // Calcul du résultat de la ligne
-	affichageConsole(); // Affichage en mode texte
+//	res_calcul = effectuerCalcul(); // Calcul du résultat de la ligne
+//	affichageConsole(); // Affichage en mode texte
+//	remplirCov(0);
+//	remplirCov(1);
 }
 
 void CalculSymbole()
@@ -297,17 +406,28 @@ void CalculSymbole()
 	{
 //		std::cout << "Abscisse avant tri : " << abs_ordre[i] << std::endl;
 	}
+//		std::cout << "test1";
+
 	inserOrdre(cf_size);
+//	std::cout << "test 1.5" << std::endl;
+
+//	for(i=0;i<cf_size;i++)
+//	{
+//		std::cout << "Abscisse après tri : " << abs_ordre_fin[i] << std::endl;
+//	}
+//	std::cout << "test2" << std::endl;
 	for(i=0;i<cf_size;i++)
 	{
-		std::cout << "Abscisse après tri : " << abs_ordre_fin[i] << std::endl;
-	}
-	for(i=0;i<cf_size;i++)
-	{
-		for(j=0;j<14;j++)
-			valeur_symbole[j] = 0;
+//		for(j=0;j<14;j++)
+//			valeur_symbole[j] = 0;
+//	std::cout << "test3" << std::endl;
+
 		detecCavite(symb_ordre_fin[i]);
+//	std::cout << "test4" << std::endl;
+
 		symbole.push_back(maxSymbole());
+//	std::cout << "test5" << std::endl;
+
 	}
 	#ifdef DEBUG
 		// Stockage des matrices calculées sous forme d'image afin de visualiser
@@ -321,24 +441,40 @@ void inserOrdre(int cf_size)
 	int i,j,min;
 	for(i=0;i<cf_size;i++)
 	{
+//	std::cout << "test min" << std::endl;
+
 		min = getAbsMin();
 //		std::cout << "Min abs : " << min << std::endl;
 
 		symb_ordre_fin.push_back(symb_ordre[min]);
+//	std::cout << "test min0" << std::endl;
+
 		abs_ordre_fin.push_back(abs_ordre[min]);
+//	std::cout << "test min1" << std::endl;
+
 		for(j=0;j<=abs_ordre.size();j++)
 		{
 //			std::cout << "Abscisses avant transfo : " << abs_ordre[j];
 		}
+
 //		std::cout<< " abs_ordre_min : " << abs_ordre[min] << " abs_ordre_size : " << abs_ordre[abs_ordre.size()] << std::endl;
 		abs_ordre[min] = abs_ordre[abs_ordre.size()-1];
+//	std::cout << "test min11" << std::endl;
+
 		symb_ordre[min] = symb_ordre[abs_ordre.size()-1];
+//	std::cout << "test min12" << std::endl;
+
 		abs_ordre.pop_back();
+//	std::cout << "test min13" << std::endl;
+
 		symb_ordre.pop_back();
+//	std::cout << "test min14" << std::endl;
+
 		for(j=0;j<=abs_ordre_fin.size();j++)
 		{
 //			std::cout << "   Abscisses apres transfo : " << abs_ordre_fin[j];
 		}
+//	std::cout << "test min15" << std::endl;
 
 
 		/*for(j=i;j<cf_size;j++)
@@ -350,6 +486,8 @@ void inserOrdre(int cf_size)
 			}
 		}*/
 	}
+//	std::cout << "test min16" << std::endl;
+
 }
 
 // Récupérer le placement actuel du symbole dont l'abscisse est la plus faible
@@ -568,23 +706,24 @@ void detecCavite(Mat& envRect)
 	res[7] = sud_ouest/sizeMat;
 	res[8] = sud_est/sizeMat;
 //	std::cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " nord_ouest " << nord_ouest << " nord_est " << nord_est << " sud_ouest " << sud_ouest << " sud_est " << sud_est << " central " << central << "total " << a << "\n";
-	fichier.open("log.txt", std::ios_base::app);
+	fichier.open("un.txt", std::ios_base::app);
 	for (int z = 0 ; z < 9 ; z++) {
 		fichier << res[z] << "  ";
 	}
 	fichier << std::endl;
 	fichier.close();
-	compDistance(res);
-	std::cout << valeur_symbole[0] << " " << valeur_symbole[1] << " " << valeur_symbole[2] << " " << valeur_symbole[3] << " " << valeur_symbole[4] << " " << valeur_symbole[5] << " " << valeur_symbole[6] << " " << valeur_symbole[7] << " " << valeur_symbole[8] << " "  << valeur_symbole[9] << " " << valeur_symbole[10] << " " << valeur_symbole[11] << " " << valeur_symbole[12] << " " << valeur_symbole[13] << std::endl;
+//	compDistance(res); // Calcul du symbole par la méthode de la plus proche moyenne
+	ppv(res);	   // Calcul du symbole par la méthode des plus proches voisins
+//	std::cout << valeur_symbole[0] << " " << valeur_symbole[1] << " " << valeur_symbole[2] << " " << valeur_symbole[3] << " " << valeur_symbole[4] << " " << valeur_symbole[5] << " " << valeur_symbole[6] << " " << valeur_symbole[7] << " " << valeur_symbole[8] << " "  << valeur_symbole[9] << " " << valeur_symbole[10] << " " << valeur_symbole[11] << " " << valeur_symbole[12] << " " << valeur_symbole[13] << std::endl;
 
-	for(i=1;i<=nbr_fichier;i++)
+/*	for(i=1;i<=nbr_fichier;i++)
 	{
 		lectureFic(i);
 		compDistance(res);
 		std::cout << valeur_symbole[0] << " " << valeur_symbole[1] << " " << valeur_symbole[2] << " " << valeur_symbole[3] << " " << valeur_symbole[4] << " " << valeur_symbole[5] << " " << valeur_symbole[6] << " " << valeur_symbole[7] << " " << valeur_symbole[8] << " "  << valeur_symbole[9] << " " << valeur_symbole[10] << " " << valeur_symbole[11] << " " << valeur_symbole[12] << " " << valeur_symbole[13] << std::endl;
 
-	}
-	std::cout << "Symbole : " << maxSymbole() << std::endl;
+	}*/
+	std::cout << "Symbole : " << res << std::endl;
 }
 
 // Fonction permettant de repérer la moyenne des valeurs des pixels afin de filtrer la gaussienne sur l'histogramme de l'image (ancienne fonction trouver contours. Le début est réutilisé, la fin est en commentaires)
@@ -670,7 +809,7 @@ float distEucl(float * cavite, int symbole_d)
 	{
 		somme += (cavite[i]-cav_moyenne[symbole_d][i])*(cavite[i]-cav_moyenne[symbole_d][i]);
 //		if(symbole_d == 0)
-//			std::cout << "Cavite : " << cavite[i] << " Cavite moyenne : " << cav_moyenne[symbole_d][i] << " Symbole " << symbole_d;
+//			std::cout << " Cavite moyenne : " << cav_moyenne[symbole_d][i] << " Symbole : " << symbole_d;
 	}
 //	std::cout << "Somme : " << somme << " pour le symbole : " << symbole_d;
 //	if(symbole_d == 0)
@@ -694,6 +833,7 @@ void compDistance(float * cavite)
 	dist_min3 = dist;
 	for(i=1;i<14;i++)
 	{
+//		std::cout << "Cavite : " << cavite[i] << std::endl;
 		dist = distEucl(cavite,i);
 //		std::cout << std::endl;
 		if(dist < dist_min1)
@@ -719,6 +859,7 @@ void compDistance(float * cavite)
 			dist_min3=dist;
 		}
 	}
+	std::cout << "Distances : " << dist_min1 << " " << dist_min2 << " " << dist_min3 << std::endl;
 //	std::cout << "Symbole : " << res << std::endl;
 	// Selon si la distance obtenue est la plus faible, la deuxième plus faible ou la troisième plus faible, on augmente la valeur du symbole correspondant. En augmentant les valeurs à l'aide des références de plusieurs fichiers, on pourra trouver le point le plus probable.
 	valeur_symbole[res1]+=9;
@@ -764,4 +905,211 @@ int maxSymbole()
 		}
 	}
 	return symbole_max;
+ }
+// Fonction pour le remplissage des matrices pour le calcul des distances de Mahalanobis
+/*
+void remplirCov(int numfic)
+{
+	int i,j,k;
+	std::ifstream fichier;
+	if(numfic == 0)
+		fichier.open("Maha_proj.txt", std::ios::in);
+	else
+		fichier.open("Vect_val_moy.txt", std::ios::in);
+	Mat::cov0.at(0,0) = 0;
+	for(k=0;k<12;k++)
+	{
+		for(i=0;i<9;i++)
+		{
+			for(j=0;j<9;j++)
+			{
+				switch(k)
+				{
+					case 0 :
+						//if(numfic == 0)
+							fichier >> Mat::cov0.at(i,j);
+						//else
+						//	fichier >> Mat::vectmoy0.at(i,j);
+
+						break;
+					case 1 :
+						if(numfic == 0)
+							fichier >> Mat::cov1.at(i,j);
+						else
+							fichier >> Mat::vectmoy1.at(i,j);
+						break;
+					case 2 :
+						if(numfic == 0)
+							fichier >> Mat::cov2.at(i,j);
+						else
+							fichier >> Mat::vectmoy2.at(i,j);
+						break;
+					case 3 :
+						if(numfic == 0)
+							fichier >> Mat::cov3.at(i,j);
+						else
+							fichier >> Mat::vectmoy3.at(i,j);
+
+						break;
+					case 4 :
+						if(numfic == 0)
+							fichier >> Mat::cov4.at(i,j);
+						else
+							fichier >> Mat::vectmoy4.at(i,j);
+						break;
+					case 5 :
+						if(numfic == 0)
+							fichier >> Mat::cov5.at(i,j);
+						else
+							fichier >> Mat::vectmoy5.at(i,j);
+						break;
+					case 6 :
+						if(numfic == 0)
+							fichier >> Mat::cov6.at(i,j);
+						else
+							fichier >> Mat::vectmoy6.at(i,j);
+
+						break;
+					case 7 :
+						if(numfic == 0)
+							fichier >> Mat::cov7.at(i,j);
+						else
+							fichier >> Mat::vectmoy7.at(i,j);
+						break;
+					case 8 :
+						if(numfic == 0)
+							fichier >> Mat::cov8.at(i,j);
+						else
+							fichier >> Mat::vectmoy8.at(i,j);
+						break;
+					case 9 :
+						if(numfic == 0)
+							fichier >> Mat::cov9.at(i,j);
+						else
+							fichier >> Mat::vectmoy9.at(i,j);
+						break;
+					case 10 :
+						if(numfic == 0)
+							fichier >> Mat::covplus.at(i,j);
+						else
+							fichier >> Mat::vectmoyplus.at(i,j);
+						break;
+					case 11 :
+						if(numfic == 0)
+							fichier >> Mat::covmult.at(i,j);
+						else
+							fichier >> Mat::vectmoymult.at(i,j);
+						break;
+				}
+			}
+		}
+	}
+	fichier.close();
+}
+*/
+/*void remplirVectMoy()
+{
+	int i,j;
+	std::ifstream fichier;
+	fichier.open("Vect_val_moy.txt", std::ios::in);
+	for(j=0;j<9;j++)
+	{
+		fichier >> vectmoy[i][j];
+	}
+	fichier.close();
+}
+*/
+
+// Remplissage des BDD de cavités des symboles. Elles sont utilisées pour le calcul des plus proches voisins mais peuvent l'être pour d'autres méthodes.
+void remplirCavite(int numfic)
+{
+	int j,k;
+	std::stringstream ss;
+	std::ifstream fichier;
+	ss << numfic; // plus : 10 - div : 11 - mult : 12 - moins : 13
+	std::string str = ss.str();
+	std::string nom = "Projet_Cavite/Cavite" + str + ".txt";
+	fichier.open(nom.c_str(), std::ios::in);
+	if(fichier)
+//	std::cout << " i:" << numfic;
+	{
+//	std::cout << "test";
+
+//		for(i=0;i<13;i++)
+	//	{
+			for(j=0;j<23;j++)
+			{
+//				std::cout << std::endl << "j:" << j;
+				for(k=0;k<9;k++)
+				{
+//					std::cout << "k:" << k;
+					fichier >> tab_cavite[numfic][j][k];
+				}
+			}
+	//	}
+	}
+	fichier.close();
+}
+
+// Algo des plus proches voisins. (Attention le symbole moins n'est pas géré, d'où le 13 et non 14)
+int ppv(float * cavite) // 13 plus proches voisins
+{
+	int i,j,k,l;
+	int res = 0;
+	float somme = 0;
+	float somme_min[13];
+	int val_min[13];
+	for(i=0;i<13;i++) // Ici, j'ai pris les 13 plus proches voisins car c'était le plus rapide pour un premier test. Pour tester avec un nombre différent de voisins, il suffit de modifier le nombre d'éléments dans somme_min et val_min et de penser à bien les initialiser tous.
+	{
+		nbr_voisins[i] = 0;
+		somme_min[i] = 1000000000;
+		val_min[i] = 0;
+	}
+	for(i=0;i<13;i++)
+	{
+		for(j=0;j<23;j++)
+		{
+			for(k=0;k<9;k++)
+			{
+//				std::cout << "Cavite : " << cavite[k] << "Cavite ref : " << tab_cavite[i][j][k] << std::endl;
+//				std::cout << "i" << i << "j" << j << "k" << k << std::endl;
+				somme += (cavite[k]-tab_cavite[i][j][k])*(cavite[k]-tab_cavite[i][j][k]);
+//				std::cout << "Somme : " << somme << std::endl;
+			}
+//			std::cout << "test" << std::endl;
+			for(k=0;k<13;k++)
+			{
+//			std::cout << "test1" << std::endl;
+
+				if(somme < somme_min[k])
+				{
+//					std::cout << "test2" << std::endl;
+
+					for(l=12;l>k;l--)
+ 					{
+//						std::cout << "test3" << std::endl;
+						somme_min[l] = somme_min[l-1];
+						val_min[l] = val_min[l-1];
+					}
+					somme_min[k] = somme;
+					val_min[k] = i;
+				}
+			}
+			somme = 0;
+		}
+//		std::cout << "val min : " << i << std::endl;
+	}
+	for(i=0;i<13;i++)
+	{
+//		std::cout << "val min i : " << val_min[i] << std::endl;
+		nbr_voisins[val_min[i]]++;
+//		std::cout << "val min 2i" << val_min[i] << std::endl;
+		if(nbr_voisins[val_min[i]] > nbr_voisins[res])
+//		std::cout << "val min 3i" << val_min[i] << std::endl;
+
+			res = val_min[i];
+//		std::cout << "res" << res << std::endl;
+	}
+	std::cout << "res :" << res << std::endl;
+	return res;
 }
