@@ -13,6 +13,7 @@
 
 #define ch 99 // Paramètre filtrage
 #define nbr_fichier 3 // Nombre de fichiers contenant des vecteurs de cavités (BDD)
+#define KPP 10
 
 using namespace cv;
 void remplirCavite(int numfic);
@@ -1059,47 +1060,50 @@ int ppv(float * cavite) // 13 plus proches voisins
 	float somme = 0;
 	float somme_min[13];
 	int val_min[13];
-	for(i=0;i<13;i++) // Ici, j'ai pris les 13 plus proches voisins car c'était le plus rapide pour un premier test. Pour tester avec un nombre différent de voisins, il suffit de modifier le nombre d'éléments dans somme_min et val_min et de penser à bien les initialiser tous.
-	{
+
+	// Initialisation et remise à "zéro" des tableaux
+	for(i=0;i<13;i++)
 		nbr_voisins[i] = 0;
+	for(i=0;i<KPP;i++)
+	{
 		somme_min[i] = 1000000000;
 		val_min[i] = 0;
 	}
-	for(i=0;i<13;i++)
+	for(i=0;i<13;i++) // Parcours des 13 symboles
 	{
-		for(j=0;j<23;j++)
+		for(j=0;j<23;j++) // Parcours des 23 listes de cavités de la BDD pour chaque symbole
 		{
-			for(k=0;k<9;k++)
+			for(k=0;k<9;k++) // Parcours des 9 cavités pour chaque liste
 			{
 //				std::cout << "Cavite : " << cavite[k] << "Cavite ref : " << tab_cavite[i][j][k] << std::endl;
 //				std::cout << "i" << i << "j" << j << "k" << k << std::endl;
-				somme += (cavite[k]-tab_cavite[i][j][k])*(cavite[k]-tab_cavite[i][j][k]);
+				somme += (cavite[k]-tab_cavite[i][j][k])*(cavite[k]-tab_cavite[i][j][k]); // Calcul de la distance euclidienne
 //				std::cout << "Somme : " << somme << std::endl;
 			}
 //			std::cout << "test" << std::endl;
-			for(k=0;k<13;k++)
+			for(k=0;k<KPP;k++) // Recherche des KPP plus proche voisins
 			{
 //			std::cout << "test1" << std::endl;
 
-				if(somme < somme_min[k])
+				if(somme < somme_min[k]) // On va chercher à placer le plus proche voisin en premier dans le tableau afin que celui-ci soit trié et que "le plus proche" voisin le plus éloigné soit en fin de tableau
 				{
 //					std::cout << "test2" << std::endl;
 
-					for(l=12;l>k;l--)
+					for(l=KPP-1;l>k;l--) // Lorsque l'on trouve un voisin plus proche que l'un de ceux du tableau, on le place de façon trié
  					{
 //						std::cout << "test3" << std::endl;
-						somme_min[l] = somme_min[l-1];
-						val_min[l] = val_min[l-1];
+						somme_min[l] = somme_min[l-1]; // On décale tous les éléments du tableau et on supprime le dernier
+						val_min[l] = val_min[l-1]; // Idem
 					}
-					somme_min[k] = somme;
-					val_min[k] = i;
+					somme_min[k] = somme; // On place l'élément au bon endroit dans le tableau
+					val_min[k] = i; // On stocke la valeur du symbole ajouté
 				}
 			}
 			somme = 0;
 		}
 //		std::cout << "val min : " << i << std::endl;
 	}
-	for(i=0;i<13;i++)
+	for(i=0;i<KPP;i++) //Recherche du symbole le plus "probable" (celui ayant le plus de "plus proche voisins")
 	{
 //		std::cout << "val min i : " << val_min[i] << std::endl;
 		nbr_voisins[val_min[i]]++;
@@ -1113,3 +1117,4 @@ int ppv(float * cavite) // 13 plus proches voisins
 	std::cout << "res :" << res << std::endl;
 	return res;
 }
+
