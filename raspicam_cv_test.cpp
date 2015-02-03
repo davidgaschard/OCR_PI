@@ -705,7 +705,7 @@ void detecCavite(Mat& envRect)
 						sud_est++;
 					else if (bg == 0 && bd == 1 && hd == 1 && hg == 1)
 						sud_ouest++;
-					else
+					else if (bg == 1 && bd == 1 && hd == 1 && hg == 1 && b == 1 && g == 1 && d == 1 && g == 1)
 						central++;
 			}
 			g=0;d=0;hg=0; hd=0;
