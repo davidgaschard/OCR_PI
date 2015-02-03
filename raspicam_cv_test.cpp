@@ -623,11 +623,11 @@ void detecCavite(Mat& envRect)
 {
 	float res[9];
 	int a =0;
-	int i;
+	int i, m, l;
 	int val,symbole;
 	std::ofstream fichier;
 	float sizeMat = envRect.rows*envRect.cols;
-	bool g=0,b=0,d=0,h=0,c=0;
+	bool g=0,b=0,d=0,h=0,c=0, bg=0, bd=0, hg =0, hd =0;
 	float gauche = 0, droite = 0, bas = 0, haut = 0, central =0, nord_ouest = 0, sud_ouest = 0, nord_est = 0, sud_est = 0;
 	for (i = 0 ; i < envRect.rows ; i++) {
    		for (int j = 0 ; j < envRect.cols ; j++) {
@@ -656,11 +656,7 @@ void detecCavite(Mat& envRect)
 					if(255 == envRect.at<uchar>(k,j))
 						b = 1;
 				}
-				if (g == 1 && d == 1 && b == 1 && h == 1)
-				{
-					central++;
-				}
-				else if (g == 1 && d == 1 && h == 1 && b == 0)
+				if (g == 1 && d == 1 && h == 1 && b == 0)
 				{
 					bas++;
 				}
@@ -676,25 +672,44 @@ void detecCavite(Mat& envRect)
 				{
 					haut++;
 				}
-				else if (g == 0 && d == 1 && b == 1 && h == 0)
-				{
-					nord_ouest++;
-				}
-				else if (g == 1 && d == 0 && b == 1 && h == 0)
-				{
-					nord_est++;
-				}
-				else if (g == 0 && d == 1 && b == 0 && h == 1)
-				{
-					sud_ouest++;
-				}
-				else if (g == 1 && d == 0 && b == 0 && h == 1)
-				{
-					sud_est++;
-				}
+				else
+					m = j; l = i;
+					while (m>=0 && l>=0 &&hg==0) {
+						if(255 == envRect.at<uchar>(m,j))
+								hg = 1;
+						m--;l--;
+					}
+					m = j; l = i;
+					while (m < envRect.cols && l>=0 && hd==0) {
+						if(255 == envRect.at<uchar>(m,j))
+								hd = 1;
+						m++;l--;
+					}
+					m = j; l = i;
+					while (m>=0 && l < envRect.rows && bg==0) {
+						if(255 == envRect.at<uchar>(m,j))
+								bg = 1;
+						m--;l++;
+					}
+					m = j; l = i;
+					while (m < envRect.cols && l < envRect.rows && bd==0) {
+						if(255 == envRect.at<uchar>(m,j))
+								bd = 1;
+						m++;l++;
+					}
+					if (bg == 1 && bd == 1 && hd == 1 && hg == 0)
+						nord_ouest++;
+					else if (bg == 1 && bd == 1 && hd == 0 && hg == 1)
+						nord_est++;
+					else if (bg == 1 && bd == 0 && hd == 1 && hg == 1)
+						sud_est++;
+					else if (bg == 0 && bd == 1 && hd == 1 && hg == 1)
+						sud_ouest++;
+					else
+						central++;
 			}
-			g=0;d=0;
-			b=0;h=0;
+			g=0;d=0;hg=0; hd=0;
+			b=0;h=0;bg =0; bd =0;
 	   	}
 	}
 	res[0] = gauche/sizeMat;
