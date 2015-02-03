@@ -675,25 +675,25 @@ void detecCavite(Mat& envRect)
 				else
 					m = j; l = i;
 					while (m>=0 && l>=0 &&hg==0) {
-						if(255 == envRect.at<uchar>(m,j))
+						if(255 == envRect.at<uchar>(m,l))
 								hg = 1;
 						m--;l--;
 					}
 					m = j; l = i;
 					while (m < envRect.cols && l>=0 && hd==0) {
-						if(255 == envRect.at<uchar>(m,j))
+						if(255 == envRect.at<uchar>(m,l))
 								hd = 1;
 						m++;l--;
 					}
 					m = j; l = i;
 					while (m>=0 && l < envRect.rows && bg==0) {
-						if(255 == envRect.at<uchar>(m,j))
+						if(255 == envRect.at<uchar>(m,l))
 								bg = 1;
 						m--;l++;
 					}
 					m = j; l = i;
 					while (m < envRect.cols && l < envRect.rows && bd==0) {
-						if(255 == envRect.at<uchar>(m,j))
+						if(255 == envRect.at<uchar>(m,l))
 								bd = 1;
 						m++;l++;
 					}
