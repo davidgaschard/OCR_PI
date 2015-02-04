@@ -707,7 +707,7 @@ void detecCavite(Mat& envRect)
 	res[7] = sud_ouest/sizeMat;
 	res[8] = sud_est/sizeMat;
 //	std::cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " nord_ouest " << nord_ouest << " nord_est " << nord_est << " sud_ouest " << sud_ouest << " sud_est " << sud_est << " central " << central << "total " << a << "\n";
-	fichier.open("un.txt", std::ios_base::app);
+	fichier.open("2345678.txt", std::ios_base::app);
 	for (int z = 0 ; z < 9 ; z++) {
 		fichier << res[z] << "  ";
 	}
