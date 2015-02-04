@@ -14,6 +14,7 @@
 #define ch 99 // Paramètre filtrage
 #define nbr_fichier 3 // Nombre de fichiers contenant des vecteurs de cavités (BDD)
 #define KPP 10
+#define sBDD 12
 
 using namespace cv;
 void remplirCavite(int numfic);
@@ -47,7 +48,7 @@ float tabMoins[10][9];
 float tabFois[10][9];
 float tabDivise[10][9];
 
-float tab_cavite[13][23][9]; // BDD
+float tab_cavite[13][sBDD][9]; // BDD
 float nbr_voisins[13];
 
 // Tentative de déclaration de matrices pour le calcul de la distance de Mahalanobis. A garder au cas où on se dirige dessus finalement.
@@ -1053,7 +1054,7 @@ void remplirCavite(int numfic)
 
 //		for(i=0;i<13;i++)
 	//	{
-			for(j=0;j<23;j++)
+			for(j=0;j<sBDD;j++)
 			{
 //				std::cout << std::endl << "j:" << j;
 				for(k=0;k<9;k++)
@@ -1086,7 +1087,7 @@ int ppv(float * cavite) // 13 plus proches voisins
 	}
 	for(i=0;i<13;i++) // Parcours des 13 symboles
 	{
-		for(j=0;j<23;j++) // Parcours des 23 listes de cavités de la BDD pour chaque symbole
+		for(j=0;j<sBDD;j++) // Parcours des 23 listes de cavités de la BDD pour chaque symbole
 		{
 			for(k=0;k<9;k++) // Parcours des 9 cavités pour chaque liste
 			{
