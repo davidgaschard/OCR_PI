@@ -13,11 +13,12 @@
 
 #define ch 99 // Paramètre filtrage
 #define nbr_fichier 3 // Nombre de fichiers contenant des vecteurs de cavités (BDD)
-#define KPP 10
-#define sBDD 12
+#define KPP 1
+#define sBDD 12 // Nombre de symboles dans la BDD
 
 using namespace cv;
 void remplirCavite(int numfic);
+float distMaha(float * cavite);
 void remplirCov(int numfic);
 int ppv(float * cavite); // 13 plus proches voisins
 void lectureFic(int num_fichier);
@@ -81,6 +82,7 @@ Mat cov9(9,9,float);
 Mat covplus(9,9,float);
 Mat covmult(9,9,float);*/
 
+float cov[13][9][9];
 /*float cov1[9][9];
 float cov2[9][9];
 float cov3[9][9];
@@ -92,6 +94,19 @@ float cov8[9][9];
 float cov9[9][9];
 float covplus[9][9];
 float covmult[9][9];*/
+
+float vect_moy[13][9];
+/*float vect_moy1[9];
+float vect_moy2[9];
+float vect_moy3[9];
+float vect_moy4[9];
+float vect_moy5[9];
+float vect_moy6[9];
+float vect_moy7[9];
+float vect_moy8[9];
+float vect_moy9[9];
+float vect_moyplus[9];
+float vect_moymult[9];*/
 
 //float vectmoy[12][9];
 /*Mat vectmoy0(9,1,float);
@@ -249,7 +264,7 @@ int main ( int argc,char **argv ) {
 	#ifdef DEBUG
 		imwrite("filtre_gaussien8.jpg",img);
 	#endif
-	std::cout << " filtre gaussien ok " << std::endl ;
+//	std::cout << " filtre gaussien ok " << std::endl ;
 
 /*	equalizeHist(img,img);
 	#ifdef DEBUG
@@ -622,7 +637,7 @@ int effectuerCalcul()
 
 void detecCavite(Mat& envRect)
 {
-	float res[9];
+	float res[5];
 	int a =0;
 	int i, m, l;
 	int val,symbole;
@@ -673,8 +688,8 @@ void detecCavite(Mat& envRect)
 				{
 					haut++;
 				}
-				else
-					m = j; l = i;
+//				else
+					/*m = j; l = i;
 					while (m>=0 && l>=0 &&hg==0) {
 						if(255 == envRect.at<uchar>(m,l))
 								hg = 1;
@@ -706,31 +721,35 @@ void detecCavite(Mat& envRect)
 						sud_est++;
 					else if (bg == 0 && bd == 1 && hd == 1 && hg == 1)
 						sud_ouest++;
-					else if (bg == 1 && bd == 1 && hd == 1 && hg == 1 && b == 1 && g == 1 && d == 1 && h == 1)
+				*/	else if (/*bg == 1 && bd == 1 && hd == 1 && hg == 1 &&*/ b == 1 && g == 1 && d == 1 && h == 1)
 						central++;
 			}
-			g=0;d=0;hg=0; hd=0;
-			b=0;h=0;bg =0; bd =0;
+			g=0;d=0;//hg=0; hd=0;
+			b=0;h=0;//bg =0; bd =0;
 	   	}
 	}
+//	std::cout << "so " << sud_ouest << " se " << sud_est << std::endl;
 	res[0] = gauche/sizeMat;
 	res[1] = droite/sizeMat;
 	res[2] = haut/sizeMat;
 	res[3] = bas/sizeMat;
 	res[4] = central/sizeMat;
-	res[5] = nord_ouest/sizeMat;
-	res[6] = nord_est/sizeMat;
-	res[7] = sud_ouest/sizeMat;
-	res[8] = sud_est/sizeMat;
+//	res[5] = nord_ouest/sizeMat;
+//	res[6] = nord_est/sizeMat;
+//	res[7] = sud_ouest/sizeMat;
+//	res[8] = sud_est/sizeMat;
 //	std::cout << " gauche " << gauche << " droite " << droite << " haut " << haut << " bas " << bas << " nord_ouest " << nord_ouest << " nord_est " << nord_est << " sud_ouest " << sud_ouest << " sud_est " << sud_est << " central " << central << "total " << a << "\n";
-	fichier.open("un.txt", std::ios_base::app);
-	for (int z = 0 ; z < 9 ; z++) {
-		fichier << res[z] << "  ";
-	}
-	fichier << std::endl;
-	fichier.close();
+//	fichier.open("un.txt", std::ios_base::app);
+//	for (int z = 0 ; z < 9 ; z++) {
+//		fichier << res[z] << "  ";
+//	}
+//	fichier << std::endl;
+//	fichier.close();
 //	compDistance(res); // Calcul du symbole par la méthode de la plus proche moyenne
 	ppv(res);	   // Calcul du symbole par la méthode des plus proches voisins
+//	remplirCov(0);
+//	remplirCov(1);
+//	distMaha(res);
 //	std::cout << valeur_symbole[0] << " " << valeur_symbole[1] << " " << valeur_symbole[2] << " " << valeur_symbole[3] << " " << valeur_symbole[4] << " " << valeur_symbole[5] << " " << valeur_symbole[6] << " " << valeur_symbole[7] << " " << valeur_symbole[8] << " "  << valeur_symbole[9] << " " << valeur_symbole[10] << " " << valeur_symbole[11] << " " << valeur_symbole[12] << " " << valeur_symbole[13] << std::endl;
 
 /*	for(i=1;i<=nbr_fichier;i++)
@@ -924,7 +943,7 @@ int maxSymbole()
 	return symbole_max;
  }
 // Fonction pour le remplissage des matrices pour le calcul des distances de Mahalanobis
-/*
+
 void remplirCov(int numfic)
 {
 	int i,j,k;
@@ -933,89 +952,20 @@ void remplirCov(int numfic)
 		fichier.open("Maha_proj.txt", std::ios::in);
 	else
 		fichier.open("Vect_val_moy.txt", std::ios::in);
-	Mat::cov0.at(0,0) = 0;
-	for(k=0;k<12;k++)
+	for(k=0;k<13;k++)
 	{
 		for(i=0;i<9;i++)
 		{
 			for(j=0;j<9;j++)
 			{
-				switch(k)
+				switch(numfic)
 				{
 					case 0 :
-						//if(numfic == 0)
-							fichier >> Mat::cov0.at(i,j);
-						//else
-						//	fichier >> Mat::vectmoy0.at(i,j);
-
+						fichier >> cov[k][i][j];
 						break;
 					case 1 :
-						if(numfic == 0)
-							fichier >> Mat::cov1.at(i,j);
-						else
-							fichier >> Mat::vectmoy1.at(i,j);
-						break;
-					case 2 :
-						if(numfic == 0)
-							fichier >> Mat::cov2.at(i,j);
-						else
-							fichier >> Mat::vectmoy2.at(i,j);
-						break;
-					case 3 :
-						if(numfic == 0)
-							fichier >> Mat::cov3.at(i,j);
-						else
-							fichier >> Mat::vectmoy3.at(i,j);
-
-						break;
-					case 4 :
-						if(numfic == 0)
-							fichier >> Mat::cov4.at(i,j);
-						else
-							fichier >> Mat::vectmoy4.at(i,j);
-						break;
-					case 5 :
-						if(numfic == 0)
-							fichier >> Mat::cov5.at(i,j);
-						else
-							fichier >> Mat::vectmoy5.at(i,j);
-						break;
-					case 6 :
-						if(numfic == 0)
-							fichier >> Mat::cov6.at(i,j);
-						else
-							fichier >> Mat::vectmoy6.at(i,j);
-
-						break;
-					case 7 :
-						if(numfic == 0)
-							fichier >> Mat::cov7.at(i,j);
-						else
-							fichier >> Mat::vectmoy7.at(i,j);
-						break;
-					case 8 :
-						if(numfic == 0)
-							fichier >> Mat::cov8.at(i,j);
-						else
-							fichier >> Mat::vectmoy8.at(i,j);
-						break;
-					case 9 :
-						if(numfic == 0)
-							fichier >> Mat::cov9.at(i,j);
-						else
-							fichier >> Mat::vectmoy9.at(i,j);
-						break;
-					case 10 :
-						if(numfic == 0)
-							fichier >> Mat::covplus.at(i,j);
-						else
-							fichier >> Mat::vectmoyplus.at(i,j);
-						break;
-					case 11 :
-						if(numfic == 0)
-							fichier >> Mat::covmult.at(i,j);
-						else
-							fichier >> Mat::vectmoymult.at(i,j);
+						fichier >> vect_moy[k][j];
+						i = 9;
 						break;
 				}
 			}
@@ -1023,7 +973,49 @@ void remplirCov(int numfic)
 	}
 	fichier.close();
 }
-*/
+
+float distMaha(float * cavite)
+{
+	float distance[13];
+	int i,j,k;
+	float x_moins_xi[9];
+	float tmp[9];
+	int res=0;
+//	for(i=0;i<12;i++)
+		std::cout << " Vect moy 00 : " << vect_moy[0][0] << " : 01 : " << vect_moy[0][1] << " : 10 : " << vect_moy[1][0] << std::endl;
+
+	for(i=0;i<13;i++)
+	{
+		for(j=0;j<9;j++)
+		{
+			x_moins_xi[j] = cavite[i] - vect_moy[i][j];
+			tmp[j] = 0;
+		}
+		for(j=0;j<9;j++)
+		{
+			for(k=0;k<9;k++)
+				tmp[j] += x_moins_xi[k]*cov[i][j][k];
+		}
+		distance[i] = 0;
+		for(j=0;j<9;j++)
+			distance[i] += x_moins_xi[j]*tmp[j];
+		std::cout << "Distance " << i << " : "<< distance[i] << std::endl;
+	}
+
+	tmp[0] = distance[0];
+	for(i=1;i<13;i++)
+	{
+		if(distance[i] < tmp[0])
+		{
+			tmp[0] = distance[i];
+			res = i;
+//			std::cout << "res : " << res << std::endl;
+		}
+	}
+	std::cout << "Resultat : " << res << std::endl;
+	return res;
+}
+
 /*void remplirVectMoy()
 {
 	int i,j;
@@ -1069,33 +1061,35 @@ void remplirCavite(int numfic)
 }
 
 // Algo des plus proches voisins. (Attention le symbole moins n'est pas géré, d'où le 13 et non 14)
-int ppv(float * cavite) // 13 plus proches voisins
+int ppv(float * cavite) // 10 plus proches voisins
 {
 	int i,j,k,l;
 	int res = 0;
 	float somme = 0;
-	float somme_min[13];
-	int val_min[13];
+	float somme_min[10];
+	int val_min[10];
 
 	// Initialisation et remise à "zéro" des tableaux
-	for(i=0;i<13;i++)
+	for(i=0;i<10;i++)
 		nbr_voisins[i] = 0;
 	for(i=0;i<KPP;i++)
 	{
 		somme_min[i] = 1000000000;
 		val_min[i] = 0;
 	}
-	for(i=0;i<13;i++) // Parcours des 13 symboles
+	for(i=0;i<10;i++) // Parcours des 13/10 symboles
 	{
-		for(j=0;j<sBDD;j++) // Parcours des 23 listes de cavités de la BDD pour chaque symbole
+		for(j=0;j<sBDD;j++) // Parcours des listes de cavités de la BDD pour chaque symbole
 		{
-			for(k=0;k<9;k++) // Parcours des 9 cavités pour chaque liste
+			for(k=0;k<5;k++) // Parcours des 9/5 cavités pour chaque liste
 			{
-//				std::cout << "Cavite : " << cavite[k] << "Cavite ref : " << tab_cavite[i][j][k] << std::endl;
+//				std::cout << "Cavite : " << cavite[k] << std::endl << "Cavite ref : " << tab_cavite[i][j][k] << std::endl;
 //				std::cout << "i" << i << "j" << j << "k" << k << std::endl;
 				somme += (cavite[k]-tab_cavite[i][j][k])*(cavite[k]-tab_cavite[i][j][k]); // Calcul de la distance euclidienne
-//				std::cout << "Somme : " << somme << std::endl;
 			}
+//			if (j<3)
+//				std::cout << "Somme : " << i << " : " << somme << std::endl;
+
 //			std::cout << "test" << std::endl;
 			for(k=0;k<KPP;k++) // Recherche des KPP plus proche voisins
 			{
@@ -1119,12 +1113,17 @@ int ppv(float * cavite) // 13 plus proches voisins
 		}
 //		std::cout << "val min : " << i << std::endl;
 	}
+//	for(k=0;k<13;k++)
+//		std::cout << "somme_min "<< k << " : "  << somme_min[k] << std::endl;
+
 	for(i=0;i<KPP;i++) //Recherche du symbole le plus "probable" (celui ayant le plus de "plus proche voisins")
 	{
 //		std::cout << "val min i : " << val_min[i] << std::endl;
 		nbr_voisins[val_min[i]]++;
-//		std::cout << "val min 2i" << val_min[i] << std::endl;
-		if(nbr_voisins[val_min[i]] > nbr_voisins[res])
+//		std::cout << "i : " << i << std::endl;
+//		std::cout << "val min i : " << val_min[i] << std::endl;
+//		std::cout << "nbr voisins : " << nbr_voisins[val_min[i]] << std::endl;
+//		if(nbr_voisins[val_min[i]] > nbr_voisins[res])
 //		std::cout << "val min 3i" << val_min[i] << std::endl;
 
 			res = val_min[i];
